@@ -61,44 +61,61 @@ squaresEl.forEach((square, index) => {
         img.classList.add('piece');
         img.id = 'id' + index;
         img.src = `img/${piece}.png`;
-        img.draggable = true;
-        img.addEventListener('dragstart', (event) => {
-            event.dataTransfer.setData('text/plain', `id${index}`);
-        });
+        img.draggable = false;
         square.append(img);
     }
-    square.addEventListener('dragover', (event) => {
-        event.preventDefault();
-    });
-});
-board.addEventListener('drop', (event) => {
-    if (event.target.classList.contains('square')) {
-        event.target.innerHTML = '';
-        const data = event.dataTransfer.getData('text/plain');
-        const piece = document.getElementById(data);
-        event.target.append(piece);
-    } else if (event.target.classList.contains('piece')) {
-        let square = event.target.parentElement;
-        square.innerHTML = '';
-        const data = event.dataTransfer.getData('text/plain');
-        const piece = document.getElementById(data);
-        square.append(piece);
-    }
 });
 
-let selectedSquare = null;
-let selectedPiece = null;
+let activeDrag = null;
 
-squaresEl.forEach((square) => {
-    square.addEventListener('click', () => {
-        // TODO: Implement piece selection and movement logic
-        if (selectedSquare) {
-            selectedSquare.style.backgroundColor = '';
+board.addEventListener('pointerdown', (event) => {
+    if (!(event.target instanceof Element)) return;
+
+    const piece = event.target.closest('.piece');
+    if (!piece) return;
+
+    event.preventDefault();
+    activeDrag = {
+        piece,
+        startX: event.clientX,
+        startY: event.clientY
+    };
+    piece.classList.add('is-dragging');
+    board.setPointerCapture(event.pointerId);
+});
+
+board.addEventListener('pointermove', (event) => {
+    if (!activeDrag) return;
+
+    const offsetX = event.clientX - activeDrag.startX;
+    const offsetY = event.clientY - activeDrag.startY;
+    activeDrag.piece.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+});
+
+function finishDrag(event, shouldMove) {
+    if (!activeDrag) return;
+
+    const { piece } = activeDrag;
+    if (shouldMove) {
+        const target = document.elementFromPoint(event.clientX, event.clientY);
+        const targetSquare = target instanceof Element ? target.closest('.square') : null;
+        if (targetSquare && board.contains(targetSquare)) {
+            targetSquare.replaceChildren();
+            targetSquare.append(piece);
         }
-        selectedSquare = square;
-        selectedPiece = square.textContent;
-        square.style.backgroundColor = '#add8e6';
-    });
+    }
+
+    piece.classList.remove('is-dragging');
+    piece.style.transform = '';
+    activeDrag = null;
+}
+
+board.addEventListener('pointerup', (event) => {
+    finishDrag(event, true);
+});
+
+board.addEventListener('pointercancel', (event) => {
+    finishDrag(event, false);
 });
 
 const movements = {

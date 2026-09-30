@@ -16,6 +16,7 @@
      grid-template: repeat(8, 1fr) / repeat(8, 1fr);
      width: clamp(300px, 100%, 600px);
      aspect-ratio: 1;
+     touch-action: none;
      /* border: 5px solid #000; */
 }
 
@@ -32,6 +33,13 @@
      height: 100%;
      object-fit: contain;
      cursor: grab;
+}
+
+.piece.is-dragging {
+     position: relative;
+     z-index: 1;
+     pointer-events: none;
+     cursor: grabbing;
 }
 
 .white {
